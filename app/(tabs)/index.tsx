@@ -1,100 +1,81 @@
-import React, { useRef } from 'react';
-import { View, StyleSheet, Text, KeyboardAvoidingView, Platform, SafeAreaView, TouchableWithoutFeedback, Keyboard } from 'react-native';
-import { RichEditor, RichToolbar, actions } from 'react-native-pell-rich-editor';
+import { useState } from 'react';
+import { Text, View, StyleSheet, TextInput, Button } from 'react-native';
+import * as SecureStore from 'expo-secure-store';
 
-const HomeScreen = () => {
-  const richText = useRef();  // Ref for RichEditor
+async function save(key: string, value: string) {
+  await SecureStore.setItemAsync(key, value);
+}
 
-  const handleChange = (text) => {
-    console.log("Description text:", text);
-  };
+async function getValueFor(key: string) {
+  let result = await SecureStore.getItemAsync(key);
+  if (result) {
+    alert("🔐 Here's your value 🔐 \n" + result);
+  } else {
+    alert('No values stored under that key.');
+  }
+}
 
-  const dismissKeyboard = () => {
-    // Dismiss the keyboard for other inputs
-    Keyboard.dismiss();
-
-    // Dismiss the keyboard for RichEditor
-    if (richText.current) {
-      richText.current.dismissKeyboard();
-    }
-  };
+export default function App() {
+  const [key, onChangeKey] = useState('Your key here');
+  const [value, onChangeValue] = useState('Your value here');
 
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <TouchableWithoutFeedback onPress={dismissKeyboard}>
-        <KeyboardAvoidingView
-          behavior={Platform.OS === "ios" ? "padding" : "height"}
-          style={styles.container}
-        >
-          <View style={styles.editorContainer}>
-            <RichToolbar
-              editor={richText}
-              style={styles.toolbar}
-              actions={[
-                actions.setBold,
-                actions.setItalic,
-                actions.setUnderline,
-                actions.heading1,
-                actions.insertBulletsList,
-                actions.insertOrderedList,
-                actions.alignLeft,
-                actions.alignCenter,
-                actions.alignRight,
-                actions.insertLink,
-                actions.undo,
-                actions.redo,
-              ]}
-              iconMap={{ [actions.heading1]: ({ tintColor }) => (<Text style={[{ color: tintColor }]}>H1</Text>), }}
-            />
-            <RichEditor
-              ref={richText}
-              style={styles.editor}
-              placeholder="Enter your description here..."
-              onChange={handleChange}
-              editorInitializedCallback={() => console.log('Editor is ready')}
-            />
-          </View>
-        </KeyboardAvoidingView>
-      </TouchableWithoutFeedback>
-    </SafeAreaView>
+    <View style={styles.container}>
+      <Text style={styles.paragraph}>Save an item, and grab it later!</Text>
+      { }
+
+      <TextInput
+        style={styles.textInput}
+        clearTextOnFocus
+        onChangeText={text => onChangeKey(text)}
+        value={key}
+      />
+      <TextInput
+        style={styles.textInput}
+        clearTextOnFocus
+        onChangeText={text => onChangeValue(text)}
+        value={value}
+      />
+      { }
+      <Button
+        title="Save this key/value pair"
+        onPress={() => {
+          save(key, value);
+          onChangeKey('Your key here');
+          onChangeValue('Your value here');
+        }}
+      />
+      <Text style={styles.paragraph}>🔐 Enter your key 🔐</Text>
+      <TextInput
+        style={styles.textInput}
+        onSubmitEditing={event => {
+          getValueFor(event.nativeEvent.text);
+        }}
+        placeholder="Enter the key for the value you want to get"
+      />
+    </View>
   );
-};
+}
 
 const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: '#f0f0f0',
-  },
   container: {
     flex: 1,
     justifyContent: 'center',
+    paddingTop: 10,
+    backgroundColor: '#ecf0f1',
+    padding: 8,
   },
-  editorContainer: {
-    marginHorizontal: 10,
-    minHeight: 200,
-    maxHeight: 400,
-    backgroundColor: 'white',
-    borderRadius: 10,
-    overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: '#e0e0e0',
-    shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.23,
-    shadowRadius: 2.62,
-    elevation: 4,
+  paragraph: {
+    marginTop: 34,
+    margin: 24,
+    fontSize: 18,
+    fontWeight: 'bold',
+    textAlign: 'center',
   },
-  toolbar: {
-    backgroundColor: '#f7f7f7',
-  },
-  editor: {
-    flex: 1,
-    padding: 10,
-    backgroundColor: 'white',
+  textInput: {
+    height: 35,
+    borderColor: 'gray',
+    borderWidth: 0.5,
+    padding: 4,
   },
 });
-
-export default HomeScreen;
